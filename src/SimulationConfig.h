@@ -69,6 +69,13 @@ struct SimulationConfig {
   uint32_t precision;
   uint32_t full_precision = 4;
   std::string layout;
+  
+  /* AHASD config */
+  bool enable_ahasd = false;
+  bool enable_edc = true;
+  bool enable_tvc = true;
+  bool enable_aau = true;
+  uint32_t max_draft_length = 16;
 
   /*
    * This map stores the partition information: <partition_id, core_id>

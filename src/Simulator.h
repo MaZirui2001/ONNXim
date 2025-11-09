@@ -7,6 +7,7 @@
 #include "Model.h"
 #include "scheduler/Scheduler.h"
 #include "scheduler/LanguageScheduler.h"
+#include "AHASDIntegration.h"
 #include <queue>
 
 #define CORE_MASK 0x1 << 1
@@ -59,6 +60,10 @@ class Simulator {
   bool _single_run;
   bool _language_mode;
   std::unique_ptr<LangScheduler> _lang_scheduler;
+  
+  // AHASD integration
+  std::unique_ptr<AHASD::AHASDIntegration> _ahasd;
+  bool _enable_ahasd;
 
   // Icnt stat
   uint64_t _nr_from_core=0;

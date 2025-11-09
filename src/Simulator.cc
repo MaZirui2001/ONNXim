@@ -74,6 +74,21 @@ Simulator::Simulator(SimulationConfig config, bool language_mode)
   //Configure Hardware Scheduler
   _scheduler = Scheduler::create(_config, &_core_cycles, &_core_time, this);
   
+  // Initialize AHASD if enabled
+  _enable_ahasd = _config.enable_ahasd;
+  if (_enable_ahasd) {
+    AHASD::AHASDConfig ahasd_config;
+    ahasd_config.enable_edc = _config.enable_edc;
+    ahasd_config.enable_tvc = _config.enable_tvc;
+    ahasd_config.enable_aau = _config.enable_aau;
+    ahasd_config.pim_freq_mhz = _config.dram_freq;  // PIM freq = DRAM freq
+    ahasd_config.npu_freq_mhz = _config.core_freq;  // NPU freq = Core freq
+    ahasd_config.max_draft_length = _config.max_draft_length;
+    _ahasd = std::make_unique<AHASD::AHASDIntegration>(ahasd_config);
+    spdlog::info("[AHASD] Enabled - EDC:{} TVC:{} AAU:{}", 
+                 ahasd_config.enable_edc, ahasd_config.enable_tvc, ahasd_config.enable_aau);
+  }
+  
   /* Create heap */
   std::make_heap(_models.begin(), _models.end(), CompareModel());
 }
@@ -194,14 +209,31 @@ void Simulator::cycle() {
       }
       _icnt->cycle();
     }
+    
+    // AHASD cycle update
+    if (_enable_ahasd && _ahasd) {
+      if (_cycle_mask & CORE_MASK) {
+        _ahasd->cycle_npu();
+        _ahasd->update_npu_progress(_core_cycles);
+      }
+      if (_cycle_mask & DRAM_MASK) {
+        _ahasd->cycle_pim();
+      }
+    }
   }
   spdlog::info("Simulation Finished at {} cycle {} us", _core_cycles, _core_cycles / (_config.core_freq) );
+  
   /* Print simulation stats */
   for (int core_id = 0; core_id < _n_cores; core_id++) {
     _cores[core_id]->print_stats();
   }
   _icnt->print_stats();
   _dram->print_stat();
+  
+  // Print AHASD statistics
+  if (_enable_ahasd && _ahasd) {
+    _ahasd->print_statistics();
+  }
 }
 
 void Simulator::register_model(std::unique_ptr<Model> model) {

@@ -4,6 +4,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.15)
 set(LIB_NAME "Simulator")
 
 # set source and headers
+# Recursively includes all source files, including:
+# - AHASD Integration (AHASDIntegration.h)
+# - Async Queue modules (async_queue/*.h)
+# - EDC, TVC modules
 file(GLOB_RECURSE SRC_FILES
   "${CMAKE_SOURCE_DIR}/src/*.h"
   "${CMAKE_SOURCE_DIR}/src/*.cc"
